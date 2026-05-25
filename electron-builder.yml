@@ -25,7 +25,6 @@ files:
   - "!images/**"
   - "!data/**"
   - "!public/**"
-  - "!CutOS/**"
   - "!*.ts"
   - "!*.tsx"
   - "!*.css"

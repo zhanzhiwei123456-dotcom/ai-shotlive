@@ -42,7 +42,6 @@ import taskRoutes from './routes/tasks.js';
 import visualStyleRoutes from './routes/visualStyles.js';
 import dataTransferRoutes from './routes/dataTransfer.js';
 import aiRoutes from './routes/ai.js';
-import cutosAgentRoutes from './routes/cutosAgent.js';
 import { recoverTasks } from './services/taskRunner.js';
 import { mountProxy } from './proxy.js';
 
@@ -76,11 +75,26 @@ expressApp.use('/api/tasks', taskRoutes);
 expressApp.use('/api/visual-styles', visualStyleRoutes);
 expressApp.use('/api/data-transfer', dataTransferRoutes);
 expressApp.use('/api/ai', aiRoutes);
-expressApp.use('/api/cutos', cutosAgentRoutes);
 
-// 健康检查（放在错误处理中间件之前）
-expressApp.get('/api/health', (_req, res) => {
-  res.json({ status: 'ok', timestamp: Date.now() });
+// 健康检查（增加数据库连接验证，实现真正的反馈控制）
+expressApp.get('/api/health', async (_req, res) => {
+  try {
+    // 验证数据库连接可用性
+    const pool = getPool();
+    await pool.execute('SELECT 1');
+    res.json({
+      status: 'ok',
+      timestamp: Date.now(),
+      database: isSqlite() ? 'sqlite' : 'mysql',
+    });
+  } catch (err) {
+    res.status(503).json({
+      status: 'degraded',
+      timestamp: Date.now(),
+      database: isSqlite() ? 'sqlite' : 'mysql',
+      databaseError: '数据库连接不可用',
+    });
+  }
 });
 
 // 生产环境：提供静态文件
@@ -107,6 +121,20 @@ export async function startServer(preferPort?: number): Promise<number> {
 
   const listenPort = preferPort ?? PORT;
   const host = process.env.ELECTRON ? '127.0.0.1' : '0.0.0.0';
+
+  // 安全加固：生产环境下强制要求配置 JWT_SECRET
+  const jwtSecret = process.env.JWT_SECRET || '';
+  if (
+    process.env.NODE_ENV === 'production' &&
+    (jwtSecret === '' || jwtSecret === 'aishotlive_jwt_secret_change_me_in_production')
+  ) {
+    console.error('⚠️ ═══════════════════════════════════════════════════════════════');
+    console.error('⚠️  生产环境必须配置 JWT_SECRET！');
+    console.error('⚠️  请生成一个随机密钥（建议 32 字节以上）并设置环境变量');
+    console.error('⚠️  例如：openssl rand -base64 32');
+    console.error('⚠️ ═══════════════════════════════════════════════════════════════');
+    process.exit(1);
+  }
 
   return new Promise((resolve, reject) => {
     const server = expressApp.listen(listenPort, host, async () => {

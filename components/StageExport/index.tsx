@@ -15,7 +15,6 @@ import StatusPanel from './StatusPanel';
 import TimelineVisualizer from './TimelineVisualizer';
 import ActionButtons from './ActionButtons';
 import SecondaryOptions from './SecondaryOptions';
-import CutOSEditor from './CutOSEditor';
 import VideoPlayerModal from './VideoPlayerModal';
 import RenderLogsModal from './RenderLogsModal';
 import { useAlert } from '../GlobalAlert';
@@ -54,7 +53,6 @@ const StageExport: React.FC<Props> = ({ project, onShowModelConfig }) => {
 
   const [isDataExporting, setIsDataExporting] = useState(false);
   const [isDataImporting, setIsDataImporting] = useState(false);
-  const [showCutOSEditor, setShowCutOSEditor] = useState(false);
 
   // Auto-play when shot changes
   useEffect(() => {
@@ -276,7 +274,6 @@ const StageExport: React.FC<Props> = ({ project, onShowModelConfig }) => {
               }}
               onPreview={openVideoPlayer}
               onDownloadMaster={handleDownloadMaster}
-              onOpenCutOS={() => setShowCutOSEditor(true)}
             />
           </div>
 
@@ -314,14 +311,7 @@ const StageExport: React.FC<Props> = ({ project, onShowModelConfig }) => {
         />
       )}
 
-      {/* CutOS AI 剪辑 */}
-      <CutOSEditor
-        project={project}
-        open={showCutOSEditor}
-        onClose={() => setShowCutOSEditor(false)}
-      />
-
-      {/* Render Logs Modal */}
+      {/* Video Preview Player Modal */}
       {showLogsModal && (
         <RenderLogsModal
           logs={collectRenderLogs(project)}

@@ -90,7 +90,7 @@ Traditional Text-to-Video models often struggle with specific camera movements a
 |-------|-----------|
 | **Frontend** | React 19, Vite 6, Tailwind CSS 4, Radix UI, Framer Motion |
 | **Backend** | Express.js, MySQL 8 / SQLite (local mode), JWT authentication |
-| **AI** | Multi-provider text/image/video/audio API with unified adapter layer (see `services/adapters`, `types/model.ts`); CutOS AI Agent (`@ai-sdk/openai`, `ai`) |
+| **AI** | Multi-provider text/image/video/audio API with unified adapter layer (see `services/adapters`, `types/model.ts`) |
 | **Storage** | MySQL / SQLite for projects, assets, model configs, and user preferences; user data isolated by `user_id` |
 | **Desktop** | Electron 33, better-sqlite3, electron-builder (macOS .dmg / Windows .exe) |
 | **Files** | Novel uploads in `uploads/`, media files (images/videos) in `data/`, isolated by user/project |
@@ -335,7 +335,6 @@ Place a `.env` file in the data directory to override default settings (e.g., AP
 This project builds upon the following open-source projects, with added frontend-backend separation and user services. Thanks to all original authors for their contributions:
 
 - [BigBanana-AI-Director](https://github.com/shuyu-labs/BigBanana-AI-Director) — Core workflow and project architecture reference
-- [CutOS](https://github.com/shamsharoon/CutOS) — AI video editor (CutOS AI editing module)
 - [CineGen-AI](https://github.com/Will-Water/CineGen-AI) — Storyboard generation and keyframe-driven workflow
 - [Toonflow-app](https://github.com/HBAI-Ltd/Toonflow-app) — Motion comic generation workflow reference
 

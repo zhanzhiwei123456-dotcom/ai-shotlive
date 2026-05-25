@@ -154,7 +154,7 @@ const parseScriptStructure = async (
   config: ModelConfig,
   rawText: string,
   language: string
-): Promise<{ title: string; genre: string; logline: string; characters: Character[]; scenes: Scene[]; storyParagraphs: any[] }> => {
+): Promise<{ title: string; genre: string; logline: string; characters: Character[]; scenes: Scene[]; props: any[]; storyParagraphs: any[] }> => {
   const prompt = `
     Analyze the text and output a JSON object in the language: ${language}.
     
@@ -164,7 +164,10 @@ const parseScriptStructure = async (
        - personality MUST include appearance prototype if the character is anthropomorphic/animal-based (e.g. 以猫为原型、拟人化狐狸形象、猫耳少女).
        - If human, personality = traits only. If animal/anthropomorphic, personality = traits + "形象: 猫/狐/狗等" or similar.
     3. Extract scenes (id, location, time, atmosphere).
-    4. Break down the story into paragraphs linked to scenes.
+    4. Extract props/items that appear repeatedly or are critical to the plot (id, name, category, description).
+       - category should be one of: weapon, document/letter, food/drink, vehicle, decoration, tech-device, other
+       - Include items like magical artifacts, weapons, letters, keys, special objects that appear across scenes
+    5. Break down the story into paragraphs linked to scenes.
     
     Input:
     "${rawText.slice(0, 30000)}"
@@ -176,6 +179,7 @@ const parseScriptStructure = async (
       "logline": "string",
       "characters": [{"id": "string", "name": "string", "gender": "string", "age": "string", "personality": "string"}],
       "scenes": [{"id": "string", "location": "string", "time": "string", "atmosphere": "string"}],
+      "props": [{"id": "string", "name": "string", "category": "string", "description": "string"}],
       "storyParagraphs": [{"id": number, "text": "string", "sceneRefId": "string"}]
     }
   `;
@@ -187,6 +191,7 @@ const parseScriptStructure = async (
     ...c, id: String(c.id), variations: [],
   }));
   const scenes: Scene[] = (parsed.scenes || []).map((s: any) => ({ ...s, id: String(s.id) }));
+  const props: any[] = (parsed.props || []).map((p: any) => ({ ...p, id: String(p.id) }));
   const storyParagraphs = (parsed.storyParagraphs || []).map((p: any) => ({ ...p, sceneRefId: String(p.sceneRefId) }));
 
   return {
@@ -195,6 +200,7 @@ const parseScriptStructure = async (
     logline: parsed.logline || '',
     characters,
     scenes,
+    props,
     storyParagraphs,
   };
 };
@@ -686,6 +692,37 @@ Style: ${stylePrompt}. Output in ${language}. Single paragraph, 60-90 words. Inc
   console.log('🌄 [ScriptParser] Phase 4: 生成场景视觉提示词');
   await generateScenePrompts(config, scenes, artDirection, genre, visualStyle, stylePrompt, sceneNegativePrompt, language, onProgress);
 
+  // Phase 5: 生成道具视觉提示词
+  const extractedProps = structureResult.props || [];
+  if (extractedProps.length > 0) {
+    onProgress?.(75, `正在生成道具视觉提示词（${extractedProps.length}个）...`);
+    console.log(`🔧 [ScriptParser] Phase 5: 生成道具视觉提示词（${extractedProps.length}个）`);
+    for (let i = 0; i < extractedProps.length; i++) {
+      try {
+        await delay(1500);
+        const prop = extractedProps[i];
+        const progress = 75 + Math.round((i / extractedProps.length) * 5);
+        onProgress?.(progress, `生成道具视觉提示词：${prop.name}`);
+        console.log(`  生成道具提示词: ${prop.name}`);
+        const p = `You are an expert AI prompt engineer for ${visualStyle} style product/prop image generation.
+Create a visual prompt for a prop/item:
+- Name: ${prop.name}
+- Category: ${prop.category || 'other'}
+- Description: ${prop.description || 'Not specified'}
+Requirements:
+1. The prop/item must be shown as a standalone object on a clean, simple background
+2. Include shape, color, material, and key visual features
+3. Style: ${stylePrompt}
+Output in ${language}. Single paragraph, 40-60 words. Output ONLY the prompt.`;
+        const result = await chatCall(config, p, 0.5, 1024);
+        extractedProps[i].visualPrompt = result.trim();
+        extractedProps[i].negativePrompt = negativePrompt;
+      } catch (e: any) {
+        console.error(`❌ [ScriptParser] 道具 ${extractedProps[i].name} 提示词生成失败:`, e.message);
+      }
+    }
+  }
+
   // 组装 scriptData
   const scriptData: ScriptData = {
     title: title || structureResult.title,
@@ -697,7 +734,7 @@ Style: ${stylePrompt}. Output in ${language}. Single paragraph, 60-90 words. Inc
     artDirection,
     characters,
     scenes,
-    props: [],
+    props: extractedProps,
     storyParagraphs,
   };
 

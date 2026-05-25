@@ -45,7 +45,10 @@ export const parseScriptToData = async (
     2. Extract characters (id, name, gender, age, personality).
        - personality MUST include appearance prototype if anthropomorphic/animal-based (e.g. 以猫为原型、拟人化狐狸、猫耳少女).
     3. Extract scenes (id, location, time, atmosphere).
-    4. Break down the story into paragraphs linked to scenes.
+    4. Extract props/items that appear repeatedly or are critical to the plot (id, name, category, description).
+       - category should be one of: weapon, document/letter, food/drink, vehicle, decoration, tech-device, other
+       - Include items like magical artifacts, weapons, letters, keys, special objects that appear across scenes
+    5. Break down the story into paragraphs linked to scenes.
     
     Input:
     "${rawText.slice(0, 30000)}" // Limit input context if needed
@@ -57,6 +60,7 @@ export const parseScriptToData = async (
       "logline": "string",
       "characters": [{"id": "string", "name": "string", "gender": "string", "age": "string", "personality": "string"}],
       "scenes": [{"id": "string", "location": "string", "time": "string", "atmosphere": "string"}],
+      "props": [{"id": "string", "name": "string", "category": "string", "description": "string"}],
       "storyParagraphs": [{"id": number, "text": "string", "sceneRefId": "string"}]
     }
   `;
@@ -80,6 +84,10 @@ export const parseScriptToData = async (
       variations: []
     })) : [];
     const scenes = Array.isArray(parsed.scenes) ? parsed.scenes.map((s: any) => ({ ...s, id: String(s.id) })) : [];
+    const props = Array.isArray(parsed.props) ? parsed.props.map((p: any) => ({
+      ...p,
+      id: String(p.id)
+    })) : [];
     const storyParagraphs = Array.isArray(parsed.storyParagraphs) ? parsed.storyParagraphs.map((p: any) => ({ ...p, sceneRefId: String(p.sceneRefId) })) : [];
 
     const genre = parsed.genre || "通用";
@@ -183,6 +191,24 @@ export const parseScriptToData = async (
       }
     }
 
+    // ========== Phase 4: 生成道具视觉提示词 ==========
+    if (props.length > 0) {
+      console.log(`  开始生成 ${props.length} 个道具的视觉提示词...`);
+      logScriptProgress(`正在生成道具视觉提示词（${props.length}个）...`);
+      for (let i = 0; i < props.length; i++) {
+        try {
+          if (i > 0 || scenes.length > 0 || characters.length > 0) await new Promise(resolve => setTimeout(resolve, 1500));
+          console.log(`  生成道具提示词: ${props[i].name}`);
+          logScriptProgress(`生成道具视觉提示词：${props[i].name}`);
+          const prompts = await generateVisualPrompts('prop', props[i], genre, model, visualStyle, language, artDirection);
+          props[i].visualPrompt = prompts.visualPrompt;
+          props[i].negativePrompt = prompts.negativePrompt;
+        } catch (e) {
+          console.error(`Failed to generate visual prompt for prop ${props[i].name}:`, e);
+        }
+      }
+    }
+
     console.log("✅ 视觉提示词生成完成！");
     logScriptProgress('视觉提示词生成完成');
 
@@ -194,7 +220,7 @@ export const parseScriptToData = async (
       artDirection,
       characters,
       scenes,
-      props: [],
+      props,
       storyParagraphs
     };
 

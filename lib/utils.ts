@@ -1,5 +1,5 @@
 /**
- * 工具函数 - 供 CutOS 等模块使用
+ * 通用工具函数
  */
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';

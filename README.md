@@ -14,7 +14,6 @@
 - **小说与剧本**：支持上传小说文件、自动解析章节，选章生成剧集剧本；也支持直接输入故事/剧本生成分镜。项目设置（标题、体裁、风格等）集成在小说管理页面，一处完成所有配置。
 - **分镜与资产**：分镜可编辑（角色、提示词、动作、台词），角色定妆与场景概念图保证画面一致性。
 - **关键帧驱动**：首帧/首尾帧控制运镜，多厂商图像与视频模型可选。
-- **CutOS AI 剪辑**：集成 CutOS 视频编辑器，支持多轨道时间线、AI Agent 对话式剪辑、视频预览、属性检查与导出。
 - **账户管理**：支持修改用户名与密码，点击侧边栏或顶栏用户名即可进入账户设置。
 - **数据导出/导入**：系统设置中可将当前用户的全部数据库数据及 `data/` 文件夹媒体文件打包为 ZIP 导出；导入时自动创建新用户，适用于跨服务器迁移或数据备份还原。
 
@@ -47,9 +46,6 @@
 
 ### 提示词管理
 ![提示词管理](./images/提示词管理.png)
-
-### CutOS AI 剪辑
-![AI 剪辑](./images/剪辑.png)
 
 ---
 
@@ -99,17 +95,6 @@
   - **AI 音频**：输入文本，AI 生成配音（TTS）并加入音频轨道。
   - **下载剪辑**：将当前轨道中的视频与图片片段打包为 ZIP 下载。
 
-### CutOS AI 剪辑编辑器
-
-集成自 [CutOS](https://github.com/shamsharoon/CutOS) 项目，提供专业级 AI 辅助视频剪辑能力：
-
-- **可视化时间线**：拖拽式多轨道剪辑，支持裁剪、分割、复制、粘贴、撤销/重做。
-- **AI Agent 对话式剪辑**：通过自然语言与 AI Agent 对话，自动执行剪辑操作（裁剪、排序、删除等），支持 dashscope、豆包等 OpenAI 兼容接口。
-- **视频预览**：实时预览当前时间线上的视频片段。
-- **属性检查器**：选中片段后可查看与编辑属性（时长、位置等）。
-- **媒体面板**：从项目资产中导入素材，一键加入时间线。
-- **导出**：将剪辑结果导出为最终视频。
-
 ### 账户管理
 
 - 点击侧边栏或项目列表页的用户名，打开「账户设置」弹窗。
@@ -145,7 +130,7 @@
 |------|------|
 | **前端** | React 19, Vite 6, Tailwind CSS 4, Radix UI, Framer Motion |
 | **后端** | Express.js, MySQL 8 / SQLite (本地模式), JWT 认证 |
-| **AI** | 多厂商文本/图像/视频/音频 API，适配器层统一调用（见 `services/adapters`、`types/model.ts`）；CutOS AI Agent（`@ai-sdk/openai`、`ai`） |
+| **AI** | 多厂商文本/图像/视频/音频 API，适配器层统一调用（见 `services/adapters`、`types/model.ts`） |
 | **存储** | MySQL / SQLite 持久化项目、资产、模型配置、用户偏好；用户数据按 `user_id` 隔离 |
 | **桌面** | Electron 33, better-sqlite3, electron-builder (macOS .dmg / Windows .exe) |
 | **文件** | 小说上传文件存于 `uploads/`，媒体文件（图片/视频）存于 `data/`，均按用户/项目隔离 |
@@ -347,11 +332,6 @@ ai-shotlive-Director/
 │   ├── StageAssets/         # Phase 02：角色/场景/道具资产
 │   ├── StageDirector/       # Phase 03：导演工作台与关键帧
 │   ├── StageExport/         # Phase 04：成片导出
-│   │   └── CutOSEditor/    # CutOS AI 剪辑编辑器
-│   │       ├── editor-shell.tsx, editor-context.tsx
-│   │       ├── timeline.tsx, video-preview.tsx, media-panel.tsx
-│   │       ├── inspector-panel.tsx, export-modal.tsx, auto-enhance-modal.tsx
-│   │       └── ui/          # 编辑器 UI 组件
 │   ├── StagePrompts/        # 提示词管理
 │   ├── ModelConfig/         # 模型配置（多提供商、API Key、激活模型）
 │   ├── VisualStyleManager.tsx # 视觉风格管理
@@ -381,10 +361,8 @@ ai-shotlive-Director/
 │       │   ├── dataTransfer.ts # 数据导出/导入（ZIP 归档）
 │       │   ├── projectPatch.ts
 │       │   ├── visualStyles.ts # 视觉风格管理
-│       │   ├── cutosAgent.ts   # CutOS AI Agent / 转录 / 字幕
 │       │   └── preferences.ts
 │       ├── services/        # taskRunner, projectStorage, aiProxy 等
-│       ├── lib/cutos/agent/ # CutOS Agent 工具与系统提示
 │       └── scripts/seed.ts
 ├── data/                    # 媒体文件（图片/视频），按项目隔离
 └── uploads/                 # 用户上传文件（按用户隔离）
@@ -450,7 +428,6 @@ ai-shotlive-Director/
 本项目参考以下开源项目修改而来，提供前后端分离和用户服务。感谢各位原作者的开源贡献：
 
 - [BigBanana-AI-Director](https://github.com/shuyu-labs/BigBanana-AI-Director) — 核心工作流与项目架构参考
-- [CutOS](https://github.com/shamsharoon/CutOS) — AI 视频剪辑编辑器（CutOS AI 剪辑模块）
 - [CineGen-AI](https://github.com/Will-Water/CineGen-AI) — 分镜生成与关键帧驱动工作流
 - [Toonflow-app](https://github.com/HBAI-Ltd/Toonflow-app) — 漫剧生成流程参考
 
